@@ -1,0 +1,117 @@
+/# Idle Champions automated combination script
+created by Bill Jordan 05/28/21#/
+/# This script will scrape the ICotLR Combination channel (in Chrome) then run ICotLR and test combinations.
+
+You can choose to run just the default scraped entries (about 50) or more.  The flow does remove extraneous text from codes, but may still mistake comments not in the proper format for the channel for non-code messages.  If so, it will simply process an invalid code.  Even with improperly formatted chat entries, the flow will continue running.
+
+You may modify the script and use non-commercially with proper credit.
+If you make improvements, please repost for others to use.
+
+Thanks,
+Bill#/
+/# NOTE: It is necessary to modify the script to open your personal copy of ICotLR.
+The chrome iteration steps need to be recreated and line 40 in PAD (line 67 of this text file must be modified to your launch link.  Either replace <<YourICotLRAppLinkHere>> with the numeric part of your link or replace the entire link in PAD editor.
+Simply right click your ICotLR desktop shortcut and copy the URL into Line 40.#/
+# Scrape ICotLR Combination Channel
+WebAutomation.LaunchChromeCloseDialog Url: $'''https://discord.com/channels/357247482247380994/358044869685673985''' WindowState: WebAutomation.BrowserWindowState.Normal ClearCache: False ClearCookies: False BrowserInstance=> ChromeBrowser
+Display.SelectFromList Title: $'''My first question''' Message: $'''How far back would you like to scrape?''' List: $'''The most recent 50
+About a month
+The beginning of time itself.''' IsTopMost: False AllowEmpty: False SelectedItem=> SelectedItem SelectedIndex=> SelectedIndex ButtonPressed=> ButtonPressed
+SWITCH SelectedIndex
+    CASE = 1
+        /# Optional scroll back to load older messages.
+50 clicks seems to be a month+#/
+        LOOP LoopIndex FROM 1 TO 50 STEP 1
+            @@timestamp: '2021-05-29T00:43:02.9202829Z'
+            UIAutomation.Click Element: appmask['Pane \'combinations - Google Chrome\'']['Group \'Messages in combinations\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: -6 OffsetY: 9 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.TopRight
+            WAIT 0.2 
+        END
+    CASE = 2
+        /# Optional scroll back to load older messages.
+50 clicks seems to be a month+#/
+        LOOP LoopIndex FROM 1 TO 500 STEP 1
+            @@timestamp: '2021-05-29T00:43:02.9202829Z'
+            UIAutomation.Click Element: appmask['Pane \'combinations - Google Chrome\'']['Group \'Messages in combinations\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: -6 OffsetY: 9 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.TopRight
+            WAIT 0.2 
+        END
+    DEFAULT
+END
+WebAutomation.DataExtraction.ExtractList BrowserInstance: ChromeBrowser Control: $'''html > body > div > div:eq(1) > div > div:eq(1) > div > div > div > div > div:eq(1) > div:eq(1) > main > div:eq(0) > div > div:eq(0) > div > div''' ExtractionParameters: {['div:eq(0) > div', 'Own Text', ''] } ExtractedData=> DataFromWebPage
+Variables.CreateNewList List=> CodeList
+LOOP FOREACH CurrentItem IN DataFromWebPage
+    DISABLE Display.ShowMessage Title: $'''CurrentItem''' Message: CurrentItem Icon: Display.Icon.None Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: False ButtonPressed=> ButtonPressed2
+    # Split multi-line entries into list
+    Text.Split Text: $'''%CurrentItem%%DataFromWebPage%''' StandardDelimiter: Text.StandardDelimiter.NewLine DelimiterTimes: 1 Result=> ChatEntry
+    DISABLE Display.ShowMessage Title: $'''Combination''' Message: $'''Chat Entry lines (I hope)
+0 - %ChatEntry[0]%
+1 - %ChatEntry[1]%
+2 - %ChatEntry[2]%
+3 - %ChatEntry[3]%
+4 - %ChatEntry[5]%''' Icon: Display.Icon.None Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: False ButtonPressed=> ButtonPressed
+    Text.Split Text: ChatEntry[0] StandardDelimiter: Text.StandardDelimiter.Space DelimiterTimes: 1 Result=> SplitEntry
+    IF IsNotEmpty(ChatEntry[0]) THEN
+        Variables.AddItemToList Item: SplitEntry[0] List: CodeList NewList=> CodeList
+    END
+END
+/# FIFO --> LIFO
+Do most recent codes first#/
+Variables.ReverseList List: CodeList ReversedList=> CodeList
+WebAutomation.CloseWebBrowser BrowserInstance: ChromeBrowser
+# Launch Idle Champions if it is not already running.
+IF (UIAutomation.Windows.IsNotOpen Window: appmask['Window \'Idle Champions\'']) THEN
+    DISABLE Display.ShowMessage Title: $'''Personalize this PAD Flow with your Idle Champions link''' Message: $'''Run Application uses a unique link for each user account.  In order to use this script, you will need to Change the next action to run your link.
+Steps:
+1) Right-Click Idle Champions shortcut --> Properties --> Copy entire URL text.
+2) In PAD edit the next command and past your URL text into the \'Run Application\' field
+3) When you have updated the application URL, disable or delete this action from the flow.''' Icon: Display.Icon.None Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> ButtonPressed2
+    System.RunApplication ApplicationPath: $'''com.epicgames.launcher://apps/<<YourICotLRAppLinkHere>>?action=launch&silent=true''' WindowStyle: System.ProcessWindowStyle.Normal ProcessId=> AppProcessId
+    ON ERROR REPEAT 1 TIMES WAIT 2
+    END
+END
+WAIT (UIAutomation.Windows.ToOpen Window: appmask['Window \'Idle Champions\''] FocusWindow: True) 
+# Start free play campaign and go to Chest Inventory screen
+@@timestamp: '2021-05-27T22:46:17.9839687Z'
+UIAutomation.Click Element: appmask['Window \'Idle Champions\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: 121 OffsetY: 140 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.TopLeft
+WAIT 2 
+@@timestamp: '2021-05-27T22:46:22.2873409Z'
+UIAutomation.Click Element: appmask['Window \'Idle Champions\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: -81 OffsetY: 176 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.MiddleCenter
+WAIT 2 
+@@timestamp: '2021-05-27T22:46:25.0587372Z'
+UIAutomation.Click Element: appmask['Window \'Idle Champions\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: -261 OffsetY: 290 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.TopCenter
+WAIT 2 
+@@timestamp: '2021-05-27T22:46:28.2383291Z'
+UIAutomation.Click Element: appmask['Window \'Idle Champions\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: 160 OffsetY: -348 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.BottomCenter
+WAIT 2 
+@@timestamp: '2021-05-27T22:46:33.8455764Z'
+UIAutomation.Click Element: appmask['Window \'Idle Champions\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: 238 OffsetY: 153 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.TopLeft
+# Unlock scraped codes
+LOOP FOREACH CurrentItem IN CodeList
+    Clipboard.Clear _
+    Clipboard.SetText Text: CurrentItem
+    # Click unlock chest button
+    @@timestamp: '2021-05-30T04:10:53.2602098Z'
+    UIAutomation.Click Element: appmask['Window \'Idle Champions\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: 96 OffsetY: -144 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.BottomLeft
+    # Click Paste from Clipboard button
+    @@timestamp: '2021-05-30T04:17:30.4691797Z'
+    UIAutomation.Click Element: appmask['Window \'Idle Champions\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: 290 OffsetY: -92 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.BottomLeft
+    @@timestamp: '2021-05-30T04:17:32.3919502Z'
+    MouseAndKeyboard.SendKeys TextToSend: '{LControlKey}({V})'
+    WAIT 0.5 
+    # Click Unlock button
+    @@timestamp: '2021-05-30T04:11:04.6758428Z'
+    UIAutomation.Click Element: appmask['Window \'Idle Champions\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: 0 OffsetY: -248 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.BottomCenter
+    WAIT 2 
+    # Click OK if not valid or flip cards if valid
+    @@timestamp: '2021-05-30T04:11:12.5269150Z'
+    UIAutomation.Click Element: appmask['Window \'Idle Champions\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: 54 OffsetY: 24 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.MiddleCenter
+    WAIT 0.5 
+    @@timestamp: '2021-05-30T04:11:12.5269150Z'
+    UIAutomation.Click Element: appmask['Window \'Idle Champions\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: 54 OffsetY: 24 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.MiddleCenter
+    WAIT 0.5 
+    # Click X to return to first screen
+    @@timestamp: '2021-05-31T00:10:57.3970518Z'
+    UIAutomation.Click Element: appmask['Window \'Idle Champions\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: 0 OffsetY: 55 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.MiddleCenter
+    WAIT 0.5 
+    @@timestamp: '2021-05-30T04:11:20.1237045Z'
+    UIAutomation.Click Element: appmask['Window \'Idle Champions\''] ClickType: UIAutomation.ClickType.LeftClick OffsetX: -28 OffsetY: 48 MousePositionRelativeToElement: UIAutomation.RectangleEdgePoint.TopRight
+END
